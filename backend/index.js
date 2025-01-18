@@ -6,8 +6,7 @@ require('dotenv').config();
 const app = express();
 
 // Constants
-const API_HOST = 'api-american-football.p.rapidapi.com';
-const API_KEY = process.env.RAPIDAPI_KEY || '9c399ae893msha515ae0a544ad67p1845c6jsn345c43dd920b';
+const API_HOST = 'sports.core.api.espn.com';
 const PORT = process.env.PORT || 5002;
 
 // Middleware
@@ -21,19 +20,12 @@ app.use(express.json());
  */
 app.get('/api/teams', async (req, res) => {
     try {
-        const response = await axios.get(`https://${API_HOST}/teams`, {
-            headers: {
-                'X-RapidAPI-Key': API_KEY,
-                'X-RapidAPI-Host': API_HOST
-            },
-            params: { league: 1, season: 2023 }
-        });
+        const response = await axios.get(`https://${API_HOST}/v2/sports/football/leagues/nfl/seasons/2024/teams`);
 
         // Simplify the response data
-        const teams = response.data.response.map((team) => ({
-            id: team.id,
-            name: team.name,
-            logo: team.logo
+        const teams = response.data.items.map((team) => ({
+            id: team.$ref.split('/').pop(), // Extract the team ID from the URL
+            ref: team.$ref
         }));
 
         res.json(teams);
@@ -51,19 +43,13 @@ app.get('/api/schedule/:teamId', async (req, res) => {
     const { teamId } = req.params;
 
     try {
-        const response = await axios.get(`https://${API_HOST}/games`, {
-            headers: {
-                'X-RapidAPI-Key': API_KEY,
-                'X-RapidAPI-Host': API_HOST
-            },
-            params: { team: teamId, season: 2023 }
-        });
+        const response = await axios.get(`https://${API_HOST}/v2/sports/football/leagues/nfl/seasons/2021/teams/${teamId}/schedule`);
 
         // Simplify the response data
-        const schedule = response.data.response.map((game) => ({
+        const schedule = response.data.events.map((game) => ({
             date: game.date || 'TBA',
-            opponent: game.teams.away.name === game.teams.home.name ? 'TBD' : game.teams.away.name,
-            venue: game.venue.name || 'TBA'
+            opponent: game.competitors.find((c) => c.id !== teamId)?.displayName || 'TBD',
+            venue: game.venue?.fullName || 'TBA'
         }));
 
         res.json(schedule);
