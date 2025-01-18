@@ -1,0 +1,74 @@
+.game-details-container {
+    text-align: center;
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 20px;
+    margin: 20px auto;
+    max-width: 800px;
+}
+
+.team-card {
+    background: #f9f9f9;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.team-card:hover {
+    transform: scale(1.05);
+    border-color: #0073e6;
+}
+
+.team-card.selected {
+    border-color: #0073e6;
+    background: #e6f7ff;
+}
+
+.team-logo {
+    max-width: 100px;
+    max-height: 100px;
+    margin-bottom: 10px;
+}
+
+.team-name {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+}
+
+.schedule-container {
+    margin-top: 40px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px auto;
+}
+
+.schedule-table th, .schedule-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+.schedule-table th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+}
+
+.schedule-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}

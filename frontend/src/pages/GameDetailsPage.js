@@ -1,124 +1,84 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import './GameDetailsPage.css';
 
 const GameDetailsPage = () => {
-    const [teams, setTeams] = useState([]); // Holds the list of teams
-    const [selectedTeam, setSelectedTeam] = useState(null); // Holds the selected team
-    const [schedule, setSchedule] = useState([]); // Holds the schedule for the selected team
-    const [loading, setLoading] = useState(false); // Tracks loading state
-    const [error, setError] = useState(null); // Tracks error state
+    const [teams, setTeams] = useState([]);
+    const [selectedTeam, setSelectedTeam] = useState(null);
+    const [schedule, setSchedule] = useState([]);
+    const [loading, setLoading] = useState(false);
 
-    // Fetch the list of teams when the component mounts
+    // Fetch teams on load
     useEffect(() => {
         const fetchTeams = async () => {
             try {
-                setLoading(true);
-                setError(null);
-
-                const response = await fetch('http://localhost:5002/api/teams');
-                const data = await response.json();
-                setTeams(data); // Update the teams state with fetched data
-            } catch (err) {
-                console.error('Error fetching teams:', err);
-                setError('Failed to fetch teams.');
-            } finally {
-                setLoading(false);
+                const response = await axios.get('http://localhost:5002/api/teams');
+                setTeams(response.data);
+            } catch (error) {
+                console.error('Error fetching teams:', error);
             }
         };
 
         fetchTeams();
     }, []);
 
-    // Fetch the schedule for a selected team
-    const fetchTeamSchedule = async (teamId) => {
+    // Fetch schedule for the selected team
+    const fetchSchedule = async (team) => {
+        setLoading(true);
+        setSelectedTeam(team);
+        setSchedule([]); // Clear previous schedule
         try {
-            setLoading(true);
-            setError(null);
-
-            const response = await fetch(`http://localhost:5002/api/schedule/${teamId}`);
-            const data = await response.json();
-
-            setSchedule(data); // Update the schedule state with fetched data
-        } catch (err) {
-            console.error('Error fetching schedule:', err);
-            setError('Failed to fetch schedule.');
+            const response = await axios.get(`http://localhost:5002/api/schedule/${team.id}`);
+            const formattedSchedule = response.data.map((game) => ({
+                date: game.game.date.date || 'TBA',
+                opponent: game.teams.home.id === team.id ? game.teams.away.name : game.teams.home.name,
+                venue: game.game.venue.name || 'TBA',
+            }));
+            setSchedule(formattedSchedule);
+        } catch (error) {
+            console.error('Error fetching schedule:', error);
         } finally {
             setLoading(false);
         }
     };
 
-    // Handle team selection
-    const handleTeamClick = (team) => {
-        setSelectedTeam(team);
-        fetchTeamSchedule(team.id);
-    };
-
     return (
-        <div style={{ padding: '20px' }}>
+        <div className="game-details-container">
             <h1>Game Details</h1>
-
-            {loading && <p>Loading...</p>}
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-
-            <div>
-                <h2>Select a Team</h2>
-                <ul style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', padding: 0 }}>
-                    {teams.map((team) => (
-                        <li
-                            key={team.id}
-                            style={{
-                                listStyle: 'none',
-                                cursor: 'pointer',
-                                border: '1px solid #ccc',
-                                borderRadius: '8px',
-                                padding: '10px',
-                                textAlign: 'center',
-                                width: '150px',
-                                boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-                                transition: 'transform 0.2s',
-                            }}
-                            onClick={() => handleTeamClick(team)}
-                        >
-                            <img
-                                src={team.logo}
-                                alt={`${team.name} logo`}
-                                style={{ width: '100px', height: '100px', marginBottom: '10px' }}
-                            />
-                            <p>{team.name}</p>
-                        </li>
-                    ))}
-                </ul>
+            <h2>Select a Team</h2>
+            <div className="team-grid">
+                {teams.map((team) => (
+                    <div
+                        key={team.id}
+                        className={`team-card ${selectedTeam?.id === team.id ? 'selected' : ''}`}
+                        onClick={() => fetchSchedule(team)}
+                    >
+                        <img src={team.logo} alt={team.name} className="team-logo" />
+                        <p className="team-name">{team.name}</p>
+                    </div>
+                ))}
             </div>
 
-            {selectedTeam && (
-                <div>
+            {loading && <p>Loading schedule...</p>}
+
+            {selectedTeam && !loading && (
+                <div className="schedule-container">
                     <h2>{selectedTeam.name} Schedule</h2>
                     {schedule.length > 0 ? (
-                        <table
-                            style={{
-                                width: '100%',
-                                borderCollapse: 'collapse',
-                                marginTop: '20px',
-                            }}
-                        >
+                        <table className="schedule-table">
                             <thead>
                                 <tr>
-                                    <th style={{ border: '1px solid #ccc', padding: '10px' }}>Date</th>
-                                    <th style={{ border: '1px solid #ccc', padding: '10px' }}>Opponent</th>
-                                    <th style={{ border: '1px solid #ccc', padding: '10px' }}>Venue</th>
+                                    <th>Date</th>
+                                    <th>Opponent</th>
+                                    <th>Venue</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {schedule.map((game, index) => (
                                     <tr key={index}>
-                                        <td style={{ border: '1px solid #ccc', padding: '10px' }}>
-                                            {game.date || 'TBA'}
-                                        </td>
-                                        <td style={{ border: '1px solid #ccc', padding: '10px' }}>
-                                            {game.opponent || 'TBA'}
-                                        </td>
-                                        <td style={{ border: '1px solid #ccc', padding: '10px' }}>
-                                            {game.venue || 'TBA'}
-                                        </td>
+                                        <td>{game.date}</td>
+                                        <td>{game.opponent}</td>
+                                        <td>{game.venue}</td>
                                     </tr>
                                 ))}
                             </tbody>
